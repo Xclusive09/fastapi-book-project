@@ -19,6 +19,10 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
+      - name: Debug SSH Connection
+        run: |
+          ssh -v -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.SERVER_IP }} exit
+
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.SERVER_IP }} << 'EOF'
@@ -27,9 +31,10 @@ jobs:
             echo "🔄 Navigating to project directory..."
             cd /home/ubuntu/fastapi-book-project || { echo "❌ Directory not found!"; exit 1; }
 
-            echo "🔄 Pulling latest changes from Git..."
-            git fetch origin main
-            git reset --hard origin/main  # Force sync with remote branch
+          echo "🔄 Pulling latest changes from Git..."
+          git fetch origin main || { echo "❌ Failed to fetch from Git!"; exit 1; }
+          git reset --hard origin/main || { echo "❌ Git reset failed!"; exit 1; }
+
 
             echo "🔄 Checking if virtual environment exists..."
             if [ ! -d "venv" ]; then
