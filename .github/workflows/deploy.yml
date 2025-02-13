@@ -32,8 +32,9 @@ jobs:
             cd /home/ubuntu/fastapi-book-project || { echo "❌ Directory not found!"; exit 1; }
 
           echo "🔄 Pulling latest changes from Git..."
-          git fetch origin main || { echo "❌ Failed to fetch from Git!"; exit 1; }
-          git reset --hard origin/main || { echo "❌ Git reset failed!"; exit 1; }
+          git fetch origin main
+          git checkout main
+          git pull origin main
 
 
             echo "🔄 Checking if virtual environment exists..."
