@@ -49,7 +49,7 @@ fastapi-book-project/
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/Xclusive09/fastapi-book-project/tree/feature
+git clone https://github.com/Xclusive09/fastapi-book-project/
 cd fastapi-book-project
 ```
 
