@@ -1,9 +1,9 @@
-name: Deploy FastAPI App
+name: Deploy API
 
 on:
   push:
     branches:
-      - main  # Trigger deployment when changes are pushed to main
+      - main
 
 jobs:
   deploy:
@@ -11,44 +11,24 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4  # Updated to v4 for latest improvements
+        uses: actions/checkout@v3
 
       - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-      - name: Debug SSH Connection
-        run: |
-          ssh -v -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.SERVER_IP }} exit
-
+          echo "${{ secrets.SSH_PRIVATE_KEY}}" > ~/.ssh/ec2_key.pem
+          chmod 600 ~/.ssh/ec2_key.pem
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.SERVER_IP }} << 'EOF'
-            set -e  # Fail fast on errors
-            
-            echo "🔄 Navigating to project directory..."
-            cd /home/ubuntu/fastapi-book-project || { echo "❌ Directory not found!"; exit 1; }
 
-          echo "🔄 Pulling latest changes from Git..."
-          git fetch origin main || { echo "❌ Failed to fetch from Git!"; exit 1; }
-          git reset --hard origin/main || { echo "❌ Git reset failed!"; exit 1; }
-
-
-            echo "🔄 Checking if virtual environment exists..."
-            if [ ! -d "venv" ]; then
-              echo "⚠️ Virtual environment not found, creating one..."
-              python3 -m venv venv
-            fi
-            
-            echo "🔄 Activating virtual environment and installing dependencies..."
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key.pem ubuntu@${{ secrets.SERVER_IP }} << 'EOF'
+            cd /home/ubuntu/fastapi-book-project
+            git pull origin main
             source venv/bin/activate
-            pip install --upgrade pip
             pip install -r requirements.txt
-
-            echo "🔄 Restarting FastAPI service..."
             sudo systemctl restart fastapi
-
-            echo "✅ Deployment completed successfully!"
           EOF
+
+            
+
+           
