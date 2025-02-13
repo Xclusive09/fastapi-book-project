@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: Run Tests
 
 on:
   pull_request:
@@ -10,20 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
           python -m venv venv
-          venv/bin/pip install --upgrade pip
-          venv/bin/pip install -r requirements.txt
-          venv/bin/pip install pytest  # Ensure pytest is installed
+          source venv/bin/activate
+          pip install -r requirements.txt
 
-      - name: Run tests with pytest
-        run: venv/bin/pytest 
+      - name: Run Tests
+        run: |
+          source venv/bin/activate
+          pytest
