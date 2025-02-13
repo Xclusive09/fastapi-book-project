@@ -3,7 +3,7 @@ name: Deploy FastAPI App
 on:
   push:
     branches:
-      - main  
+      - main  # Trigger deployment when changes are pushed to main
 
 jobs:
   deploy:
@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4  # ✅ Latest version
 
       - name: Set up SSH and Deploy
         uses: appleboy/ssh-action@v0.1.10
@@ -20,9 +20,35 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd ~/fastapi-book-project
-            git pull origin main
+            set -e  # 🔹 Stops execution if any command fails (fail fast)
+            
+            echo "🔄 Navigating to project directory..."
+            cd /home/ubuntu/fastapi-book-project || { echo "❌ Directory not found!"; exit 1; }
+
+            echo "🔄 Pulling latest changes from Git..."
+            git fetch origin main
+            git reset --hard origin/main  # Force sync with remote branch
+
+            echo "🔄 Checking if virtual environment exists..."
+            if [ ! -d "venv" ]; then
+              echo "⚠️ Virtual environment not found, creating one..."
+              python3 -m venv venv
+            fi
+            
+            echo "🔄 Activating virtual environment and installing dependencies..."
             source venv/bin/activate
+            pip install --upgrade pip
             pip install -r requirements.txt
-            sudo systemctl restart fastapi
-            sudo systemctl restart nginx
+
+            echo "🔄 Restarting FastAPI service..."
+            if sudo systemctl is-active --quiet fastapi; then
+              sudo systemctl restart fastapi
+            else
+              echo "⚠️ FastAPI service not found, starting it..."
+              sudo systemctl start fastapi
+            fi
+
+            echo "🔄 Restarting Nginx..."
+            sudo systemctl restart nginx || { echo "❌ Failed to restart Nginx"; exit 1; }
+
+            echo "✅ Deployment completed successfully!"
